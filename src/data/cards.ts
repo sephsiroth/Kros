@@ -53,12 +53,12 @@ export const PYROS_CARDS: Card[] = [
     hp: 7,
     pm: 1,
     range: 1,
-    description: 'Barde de lave colossale résistant aux chocs.',
+    description: 'Barde de lava colossale résistant aux chocs.',
     illustration: '🗿'
   },
   {
     id: 'pyr_c5',
-    name: 'Demon Infernale',
+    name: 'Démon Infernal',
     god: 'PYROS',
     type: 'CREATURE',
     paCost: 3,
@@ -69,6 +69,33 @@ export const PYROS_CARDS: Card[] = [
     description: 'Très rapide mais fragile.',
     creatureEffect: { type: 'CHARGE' },
     illustration: '😈'
+  },
+  {
+    id: 'pyr_c6',
+    name: 'Bwork Guerrier',
+    god: 'PYROS',
+    type: 'CREATURE',
+    paCost: 3,
+    atk: 3,
+    hp: 5,
+    pm: 1,
+    range: 1,
+    description: 'Combattant sauvage de première ligne.',
+    illustration: '👹'
+  },
+  {
+    id: 'pyr_c7',
+    name: 'Sacrieur Enragé',
+    god: 'PYROS',
+    type: 'CREATURE',
+    paCost: 5,
+    atk: 6,
+    hp: 5,
+    pm: 2,
+    range: 1,
+    description: 'Guerrier sanguinaire qui fonce au combat.',
+    creatureEffect: { type: 'CHARGE' },
+    illustration: '🩸'
   },
   {
     id: 'pyr_s1',
@@ -171,6 +198,33 @@ export const ZEPHIRA_CARDS: Card[] = [
     illustration: '🐤'
   },
   {
+    id: 'zep_c6',
+    name: 'Wabbit Rapide',
+    god: 'ZEPHIRA',
+    type: 'CREATURE',
+    paCost: 2,
+    atk: 1,
+    hp: 3,
+    pm: 2,
+    range: 1,
+    description: 'Piocher 1 carte à l\'invocation.',
+    creatureEffect: { type: 'ON_SUMMON_DRAW', value: 1 },
+    illustration: '🐇'
+  },
+  {
+    id: 'zep_c7',
+    name: 'Pandawa Ventuel',
+    god: 'ZEPHIRA',
+    type: 'CREATURE',
+    paCost: 4,
+    atk: 3,
+    hp: 5,
+    pm: 1,
+    range: 2,
+    description: 'Tireur résistant à distance.',
+    illustration: '🐼'
+  },
+  {
     id: 'zep_s1',
     name: 'Flèche Ciblée',
     god: 'ZEPHIRA',
@@ -244,6 +298,19 @@ export const NEUTRAL_CARDS: Card[] = [
     illustration: '🐱'
   },
   {
+    id: 'neu_c4',
+    name: 'Chef de Guerre Gobbal',
+    god: 'NEUTRAL',
+    type: 'CREATURE',
+    paCost: 4,
+    atk: 4,
+    hp: 5,
+    pm: 1,
+    range: 1,
+    description: 'Chef de meute puissant.',
+    illustration: '👑'
+  },
+  {
     id: 'neu_s1',
     name: 'Potion de Soin',
     god: 'NEUTRAL',
@@ -259,7 +326,6 @@ export function generateDeck(god: GodId): Card[] {
   const godSpecific = god === 'PYROS' ? PYROS_CARDS : ZEPHIRA_CARDS;
   const rawDeck: Card[] = [];
 
-  // Generate 15-18 cards deck
   godSpecific.forEach(card => {
     rawDeck.push({ ...card, id: `${card.id}_1` });
     rawDeck.push({ ...card, id: `${card.id}_2` });
@@ -269,7 +335,7 @@ export function generateDeck(god: GodId): Card[] {
     rawDeck.push({ ...card, id: `${card.id}_1` });
   });
 
-  const deck = rawDeck.slice(0, 15);
+  const deck = rawDeck.slice(0, 18);
   return shuffle(deck);
 }
 

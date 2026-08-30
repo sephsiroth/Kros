@@ -17,3 +17,6 @@
 1:26:54 PM [vite] (client) page reload src/engine/gameEngine.test.ts
 1:28:11 PM [vite] (client) hmr update /src/App.tsx, /src/index.css
 1:28:21 PM [vite] (client) page reload tsconfig.tsbuildinfo
+1:40:58 PM [vite] (client) hmr update /src/index.css, /src/App.tsx
+1:42:19 PM [vite] (client) hmr update /src/components/GameView.tsx, /src/index.css
+1:42:40 PM [vite] (client) page reload tsconfig.tsbuildinfo

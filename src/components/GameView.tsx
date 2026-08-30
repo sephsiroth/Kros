@@ -3,7 +3,9 @@ import { GameState, Card, CreatureOnBoard, Dofus } from '../types/game';
 import { Board } from './Board';
 import { CardItem } from './CardItem';
 import { CardDetailModal } from './CardDetailModal';
-import { Flame, Wind, Shield, Zap, RefreshCw, Trophy, Skull, Scroll, Play, Maximize, Minimize } from 'lucide-react';
+import { GodPowerModal } from './GodPowerModal';
+import { HistoryModal } from './HistoryModal';
+import { Flame, Wind, Shield, Zap, RefreshCw, Trophy, Skull, Scroll, Play, Maximize, Minimize, History } from 'lucide-react';
 
 interface GameViewProps {
   gameState: GameState;
@@ -33,6 +35,8 @@ export const GameView: React.FC<GameViewProps> = ({
 
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [detailedCard, setDetailedCard] = useState<Card | null>(null);
+  const [showGodPowerModal, setShowGodPowerModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -47,7 +51,7 @@ export const GameView: React.FC<GameViewProps> = ({
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden select-none">
 
-      {/* TOP BAR - AI STATUS & FULLSCREEN */}
+      {/* TOP BAR - AI STATUS, HISTORY & FULLSCREEN */}
       <header className="flex items-center justify-between px-3 py-2 bg-slate-900/80 border-b border-slate-800 backdrop-blur-md">
         <div className="flex items-center gap-2 md:gap-3">
           <div className="p-1.5 md:p-2 rounded-xl bg-red-950/60 border border-red-500/40 text-red-400">
@@ -70,8 +74,18 @@ export const GameView: React.FC<GameViewProps> = ({
           </span>
         </div>
 
-        {/* AI PA & Fullscreen Toggle */}
-        <div className="flex items-center gap-2">
+        {/* Action Controls */}
+        <div className="flex items-center gap-1.5 md:gap-2">
+          {/* History Button */}
+          <button
+            onClick={() => setShowHistoryModal(true)}
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors text-xs font-bold"
+            title="Historique des Actions"
+          >
+            <History className="w-4 h-4 text-amber-400" />
+            <span className="hidden sm:inline">Historique</span>
+          </button>
+
           <div className="flex items-center gap-1 bg-blue-950/60 border border-blue-500/40 px-2.5 py-1 rounded-xl text-blue-300 font-bold text-xs md:text-sm">
             <Zap className="w-3.5 h-3.5 fill-blue-400 text-blue-400" />
             <span>{ai.pa} / {ai.maxPa} PA</span>
@@ -142,7 +156,10 @@ export const GameView: React.FC<GameViewProps> = ({
 
           {/* Player God & Power Button */}
           <div className="flex items-center gap-2 md:gap-3">
-            <div className="p-1.5 md:p-2 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-indigo-400">
+            <div
+              onClick={() => setShowGodPowerModal(true)}
+              className="p-1.5 md:p-2 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-indigo-400 cursor-pointer hover:border-indigo-400 transition-colors"
+            >
               {player.god === 'PYROS' ? <Flame className="w-4 h-4 md:w-5 md:h-5" /> : <Wind className="w-4 h-4 md:w-5 md:h-5" />}
             </div>
             <div>
@@ -150,13 +167,12 @@ export const GameView: React.FC<GameViewProps> = ({
               <div className="text-[10px] text-slate-400">Deck: {player.deck.length}</div>
             </div>
 
-            {/* God Power Button */}
+            {/* God Power Button (opens GodPowerModal on click) */}
             <button
-              onClick={onUseGodPower}
-              disabled={!isPlayerTurn || player.pa < player.godPowerCost || player.godPowerUsedThisTurn}
+              onClick={() => setShowGodPowerModal(true)}
               className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border font-bold text-xs transition-all ${
                 !isPlayerTurn || player.pa < player.godPowerCost || player.godPowerUsedThisTurn
-                  ? 'opacity-40 grayscale cursor-not-allowed border-slate-800 bg-slate-900'
+                  ? 'bg-slate-900 border-slate-800 text-slate-400 hover:border-teal-500/40'
                   : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 border-teal-400/50 shadow-md text-white'
               }`}
             >
@@ -215,6 +231,26 @@ export const GameView: React.FC<GameViewProps> = ({
             onSelectCard(detailedCard);
             setDetailedCard(null);
           }}
+        />
+      )}
+
+      {/* GOD POWER MODAL */}
+      {showGodPowerModal && (
+        <GodPowerModal
+          god={player.god}
+          cost={player.godPowerCost}
+          canUse={isPlayerTurn && player.pa >= player.godPowerCost && !player.godPowerUsedThisTurn}
+          usedThisTurn={player.godPowerUsedThisTurn}
+          onClose={() => setShowGodPowerModal(false)}
+          onUse={onUseGodPower}
+        />
+      )}
+
+      {/* HISTORY MODAL */}
+      {showHistoryModal && (
+        <HistoryModal
+          logs={logs}
+          onClose={() => setShowHistoryModal(false)}
         />
       )}
 
