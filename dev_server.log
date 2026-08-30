@@ -7,3 +7,13 @@
 
   ➜  Local:   http://localhost:5173/
   ➜  Network: use --host to expose
+1:23:37 PM [vite] (client) hmr update /src/index.css, /src/App.tsx
+1:23:50 PM [vite] (client) page reload src/types/game.ts
+1:24:47 PM [vite] (client) hmr update /src/App.tsx, /src/index.css
+1:25:30 PM [vite] (client) hmr update /src/components/Board.tsx, /src/index.css
+1:26:05 PM [vite] (client) hmr update /src/components/GameView.tsx, /src/index.css
+1:26:13 PM [vite] (client) page reload tsconfig.tsbuildinfo
+1:26:37 PM [vite] (client) page reload src/engine/gameEngine.test.ts
+1:26:54 PM [vite] (client) page reload src/engine/gameEngine.test.ts
+1:28:11 PM [vite] (client) hmr update /src/App.tsx, /src/index.css
+1:28:21 PM [vite] (client) page reload tsconfig.tsbuildinfo

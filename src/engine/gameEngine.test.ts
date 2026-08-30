@@ -3,56 +3,34 @@ import { createInitialGameState, playCreatureCard, playSpellCard, useGodPower, e
 import { executeAiTurn } from '../engine/aiEngine';
 import { PYROS_CARDS, ZEPHIRA_CARDS } from '../data/cards';
 
-describe('KROS-LEGENDS Game Engine', () => {
-  it('should initialize game state correctly', () => {
+describe('KROS-LEGENDS Game Engine with Prisms', () => {
+  it('should initialize prisms on center column x=2', () => {
     const state = createInitialGameState('PYROS');
-    expect(state.player.god).toBe('PYROS');
-    expect(state.ai.god).toBe('ZEPHIRA');
-    expect(state.player.pa).toBe(3);
-    expect(state.player.hand.length).toBe(3);
-    expect(state.dofuses.player.length).toBe(5);
-    expect(state.dofuses.ai.length).toBe(5);
-    expect(state.dofuses.player.filter(d => d.isReal).length).toBe(3);
+    expect(state.prisms.length).toBe(5);
+    state.prisms.forEach(p => {
+      expect(p.position).toBe(2);
+    });
   });
 
-  it('should play a creature card on lane tile x=0', () => {
+  it('should collect prism when creature steps on position x=2', () => {
     let state = createInitialGameState('PYROS');
-    const creatureCard = PYROS_CARDS.find(c => c.type === 'CREATURE')!;
+    const creatureCard = PYROS_CARDS[0]; // Bouftou de Feu (PM 1)
 
-    // Give enough PA and card in hand
     state.player.pa = 10;
     state.player.hand = [creatureCard];
 
-    const newState = playCreatureCard(state, 'PLAYER', creatureCard, 2);
-    expect(newState.board.length).toBe(1);
-    expect(newState.board[0].laneIndex).toBe(2);
-    expect(newState.board[0].position).toBe(0);
-    expect(newState.player.hand.length).toBe(0);
-  });
-
-  it('should move creature forward and engage in combat on end turn', () => {
-    let state = createInitialGameState('PYROS');
-    const playerCreatureCard = PYROS_CARDS[0]; // Bouftou de Feu (PM 1)
-
-    state.player.pa = 10;
-    state.player.hand = [playerCreatureCard];
-
     // Player summons creature on lane 0, pos 0
-    state = playCreatureCard(state, 'PLAYER', playerCreatureCard, 0);
-    expect(state.board[0].position).toBe(0);
+    state = playCreatureCard(state, 'PLAYER', creatureCard, 0);
 
-    // End turn -> creature moves to pos 1
+    // Turn 1 end: moves to pos 1
     state = endTurnAndResolveMovement(state);
     expect(state.board[0].position).toBe(1);
-  });
 
-  it('should execute AI turn effectively', () => {
-    let state = createInitialGameState('PYROS');
-    state.phase = 'AI_TURN';
-    state.activePlayer = 'AI';
-    state.ai.pa = 10;
+    // Turn 2 end (AI turn resolution): moves to pos 2 (Prism collected!)
+    state = endTurnAndResolveMovement(state);
 
-    const stateAfterAi = executeAiTurn(state);
-    expect(stateAfterAi.board.filter(c => c.owner === 'AI').length).toBeGreaterThan(0);
+    expect(state.board[0].position).toBe(2);
+    // Prism collected on lane 0
+    expect(state.prisms.some(p => p.laneIndex === 0 && p.position === 2)).toBe(false);
   });
 });

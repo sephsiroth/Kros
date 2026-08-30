@@ -38,6 +38,13 @@ export interface Dofus {
   isRevealed: boolean;
 }
 
+export interface Prism {
+  id: string;
+  laneIndex: number; // 0 to 4
+  position: number;  // Always 2 (center column)
+  type: 'PA' | 'DRAW';
+}
+
 export interface CreatureOnBoard {
   id: string; // Unique instance ID
   cardId: string;
@@ -70,7 +77,7 @@ export type GamePhase = 'PLAYER_TURN' | 'AI_TURN' | 'RESOLVING' | 'GAME_OVER';
 export interface GameLog {
   id: string;
   text: string;
-  type: 'INFO' | 'COMBAT' | 'SPELL' | 'GOD_POWER' | 'VICTORY';
+  type: 'INFO' | 'COMBAT' | 'SPELL' | 'GOD_POWER' | 'PRISM' | 'VICTORY';
 }
 
 export interface GameState {
@@ -83,6 +90,7 @@ export interface GameState {
     player: Dofus[]; // 5 Dofuses at col 0
     ai: Dofus[];     // 5 Dofuses at col 4
   };
+  prisms: Prism[];   // Prisms on center column x=2
   board: CreatureOnBoard[];
   selectedCardId: string | null;
   selectedTargetType: 'TILE' | 'CREATURE' | 'ENEMY_LINE' | 'NONE' | null;

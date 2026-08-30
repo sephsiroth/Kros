@@ -1,8 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { GameState, Card, CreatureOnBoard, Dofus } from '../types/game';
 import { Board } from './Board';
 import { CardItem } from './CardItem';
-import { Flame, Wind, Shield, Zap, RefreshCw, Trophy, Skull, Scroll, Play } from 'lucide-react';
+import { CardDetailModal } from './CardDetailModal';
+import { Flame, Wind, Shield, Zap, RefreshCw, Trophy, Skull, Scroll, Play, Maximize, Minimize } from 'lucide-react';
 
 interface GameViewProps {
   gameState: GameState;
@@ -27,21 +28,34 @@ export const GameView: React.FC<GameViewProps> = ({
   onEndTurn,
   onRestart,
 }) => {
-  const { player, ai, board, dofuses, phase, activePlayer, logs, winner } = gameState;
+  const { player, ai, board, dofuses, prisms, phase, activePlayer, logs, winner } = gameState;
   const isPlayerTurn = phase === 'PLAYER_TURN' && activePlayer === 'PLAYER';
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [detailedCard, setDetailedCard] = useState<Card | null>(null);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+      }
+    }
+  };
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden select-none">
 
-      {/* TOP BAR - AI STATUS */}
-      <header className="flex items-center justify-between px-4 py-2 bg-slate-900/80 border-b border-slate-800 backdrop-blur-md">
-        <div className="flex items-center gap-3">
-          <div className="p-2 rounded-xl bg-red-950/60 border border-red-500/40 text-red-400">
-            {ai.god === 'PYROS' ? <Flame className="w-5 h-5" /> : <Wind className="w-5 h-5" />}
+      {/* TOP BAR - AI STATUS & FULLSCREEN */}
+      <header className="flex items-center justify-between px-3 py-2 bg-slate-900/80 border-b border-slate-800 backdrop-blur-md">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="p-1.5 md:p-2 rounded-xl bg-red-950/60 border border-red-500/40 text-red-400">
+            {ai.god === 'PYROS' ? <Flame className="w-4 h-4 md:w-5 md:h-5" /> : <Wind className="w-4 h-4 md:w-5 md:h-5" />}
           </div>
           <div>
             <div className="text-xs font-bold text-red-400">IA ({ai.god})</div>
-            <div className="text-[11px] text-slate-400">
+            <div className="text-[10px] md:text-[11px] text-slate-400">
               Deck: {ai.deck.length} | Main: {ai.hand.length}
             </div>
           </div>
@@ -56,10 +70,20 @@ export const GameView: React.FC<GameViewProps> = ({
           </span>
         </div>
 
-        {/* AI PA Indicator */}
-        <div className="flex items-center gap-1.5 bg-blue-950/60 border border-blue-500/40 px-3 py-1 rounded-xl text-blue-300 font-bold text-sm">
-          <Zap className="w-4 h-4 fill-blue-400 text-blue-400" />
-          <span>{ai.pa} / {ai.maxPa} PA</span>
+        {/* AI PA & Fullscreen Toggle */}
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-blue-950/60 border border-blue-500/40 px-2.5 py-1 rounded-xl text-blue-300 font-bold text-xs md:text-sm">
+            <Zap className="w-3.5 h-3.5 fill-blue-400 text-blue-400" />
+            <span>{ai.pa} / {ai.maxPa} PA</span>
+          </div>
+
+          <button
+            onClick={toggleFullscreen}
+            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+            title="Plein écran Mobile"
+          >
+            {isFullscreen ? <Minimize className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
+          </button>
         </div>
       </header>
 
@@ -72,6 +96,7 @@ export const GameView: React.FC<GameViewProps> = ({
             board={board}
             playerDofuses={dofuses.player}
             aiDofuses={dofuses.ai}
+            prisms={prisms}
             selectedCardType={selectedCard ? selectedCard.type : null}
             onTileClick={onTileClick}
             onCreatureClick={onCreatureClick}
@@ -79,7 +104,7 @@ export const GameView: React.FC<GameViewProps> = ({
           />
         </div>
 
-        {/* GAME LOGS PANEL (Hidden on very small screens) */}
+        {/* GAME LOGS PANEL */}
         <div className="hidden md:flex flex-col h-full bg-slate-900/60 border border-slate-800/80 rounded-2xl p-3 overflow-hidden backdrop-blur-md">
           <div className="flex items-center gap-2 mb-2 pb-2 border-b border-slate-800 text-xs font-bold text-slate-300">
             <Scroll className="w-4 h-4 text-amber-400" />
@@ -92,6 +117,8 @@ export const GameView: React.FC<GameViewProps> = ({
                 className={`p-2 rounded-lg border ${
                   log.type === 'VICTORY'
                     ? 'bg-amber-950/60 border-amber-500/40 text-amber-200 font-bold'
+                    : log.type === 'PRISM'
+                    ? 'bg-purple-950/50 border-purple-800/40 text-purple-200'
                     : log.type === 'COMBAT'
                     ? 'bg-red-950/40 border-red-900/30 text-red-200'
                     : log.type === 'SPELL'
@@ -114,9 +141,9 @@ export const GameView: React.FC<GameViewProps> = ({
         <div className="flex items-center justify-between gap-2 max-w-5xl mx-auto w-full">
 
           {/* Player God & Power Button */}
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-indigo-400">
-              {player.god === 'PYROS' ? <Flame className="w-5 h-5" /> : <Wind className="w-5 h-5" />}
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="p-1.5 md:p-2 rounded-xl bg-indigo-950/80 border border-indigo-500/40 text-indigo-400">
+              {player.god === 'PYROS' ? <Flame className="w-4 h-4 md:w-5 md:h-5" /> : <Wind className="w-4 h-4 md:w-5 md:h-5" />}
             </div>
             <div>
               <div className="text-xs font-bold text-indigo-300">{player.god} (Vous)</div>
@@ -127,7 +154,7 @@ export const GameView: React.FC<GameViewProps> = ({
             <button
               onClick={onUseGodPower}
               disabled={!isPlayerTurn || player.pa < player.godPowerCost || player.godPowerUsedThisTurn}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border font-bold text-xs transition-all ${
+              className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border font-bold text-xs transition-all ${
                 !isPlayerTurn || player.pa < player.godPowerCost || player.godPowerUsedThisTurn
                   ? 'opacity-40 grayscale cursor-not-allowed border-slate-800 bg-slate-900'
                   : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-500 hover:to-emerald-500 border-teal-400/50 shadow-md text-white'
@@ -139,7 +166,7 @@ export const GameView: React.FC<GameViewProps> = ({
           </div>
 
           {/* PA BAR */}
-          <div className="flex items-center gap-2 bg-blue-950/80 border border-blue-500/50 px-4 py-1.5 rounded-xl text-blue-300 font-extrabold text-sm shadow-md">
+          <div className="flex items-center gap-1.5 bg-blue-950/80 border border-blue-500/50 px-3 py-1.5 rounded-xl text-blue-300 font-extrabold text-xs md:text-sm shadow-md">
             <Zap className="w-4 h-4 fill-blue-400 text-blue-400" />
             <span>{player.pa} / {player.maxPa} PA</span>
           </div>
@@ -148,7 +175,7 @@ export const GameView: React.FC<GameViewProps> = ({
           <button
             onClick={onEndTurn}
             disabled={!isPlayerTurn}
-            className={`flex items-center gap-2 px-5 py-2 rounded-xl font-black text-xs md:text-sm transition-all shadow-lg ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-black text-xs md:text-sm transition-all shadow-lg ${
               !isPlayerTurn
                 ? 'opacity-40 grayscale cursor-not-allowed border border-slate-800 bg-slate-900'
                 : 'bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 hover:from-amber-400 hover:to-red-400 border border-amber-300 text-slate-950 animate-pulse'
@@ -170,13 +197,26 @@ export const GameView: React.FC<GameViewProps> = ({
                 card={card}
                 isSelected={selectedCard?.id === card.id}
                 isDisabled={!isPlayerTurn || player.pa < card.paCost}
-                onClick={() => onSelectCard(card)}
+                onClick={() => setDetailedCard(card)}
                 size="sm"
               />
             ))
           )}
         </div>
       </footer>
+
+      {/* CARD DETAIL MODAL */}
+      {detailedCard && (
+        <CardDetailModal
+          card={detailedCard}
+          canPlay={isPlayerTurn && player.pa >= detailedCard.paCost}
+          onClose={() => setDetailedCard(null)}
+          onPlay={() => {
+            onSelectCard(detailedCard);
+            setDetailedCard(null);
+          }}
+        />
+      )}
 
       {/* GAME OVER MODAL */}
       {winner && (

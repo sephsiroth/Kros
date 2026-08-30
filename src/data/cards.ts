@@ -44,6 +44,33 @@ export const PYROS_CARDS: Card[] = [
     illustration: '🐉'
   },
   {
+    id: 'pyr_c4',
+    name: 'Craqueleur de Lave',
+    god: 'PYROS',
+    type: 'CREATURE',
+    paCost: 5,
+    atk: 4,
+    hp: 7,
+    pm: 1,
+    range: 1,
+    description: 'Barde de lave colossale résistant aux chocs.',
+    illustration: '🗿'
+  },
+  {
+    id: 'pyr_c5',
+    name: 'Demon Infernale',
+    god: 'PYROS',
+    type: 'CREATURE',
+    paCost: 3,
+    atk: 4,
+    hp: 2,
+    pm: 2,
+    range: 1,
+    description: 'Très rapide mais fragile.',
+    creatureEffect: { type: 'CHARGE' },
+    illustration: '😈'
+  },
+  {
     id: 'pyr_s1',
     name: 'Flamme Magmatique',
     god: 'PYROS',
@@ -117,6 +144,33 @@ export const ZEPHIRA_CARDS: Card[] = [
     illustration: '🎯'
   },
   {
+    id: 'zep_c4',
+    name: 'Prespic Agile',
+    god: 'ZEPHIRA',
+    type: 'CREATURE',
+    paCost: 2,
+    atk: 2,
+    hp: 2,
+    pm: 2,
+    range: 1,
+    description: 'Piocher 1 carte à l\'invocation.',
+    creatureEffect: { type: 'ON_SUMMON_DRAW', value: 1 },
+    illustration: '🦔'
+  },
+  {
+    id: 'zep_c5',
+    name: 'Tofu Céleste',
+    god: 'ZEPHIRA',
+    type: 'CREATURE',
+    paCost: 3,
+    atk: 2,
+    hp: 2,
+    pm: 3,
+    range: 1,
+    description: 'Vitesse du vent inégalée (PM 3).',
+    illustration: '🐤'
+  },
+  {
     id: 'zep_s1',
     name: 'Flèche Ciblée',
     god: 'ZEPHIRA',
@@ -177,6 +231,19 @@ export const NEUTRAL_CARDS: Card[] = [
     illustration: '🐤'
   },
   {
+    id: 'neu_c3',
+    name: 'Mercenaire Chacha',
+    god: 'NEUTRAL',
+    type: 'CREATURE',
+    paCost: 3,
+    atk: 3,
+    hp: 3,
+    pm: 2,
+    range: 1,
+    description: 'Créature polyvalente.',
+    illustration: '🐱'
+  },
+  {
     id: 'neu_s1',
     name: 'Potion de Soin',
     god: 'NEUTRAL',
@@ -192,7 +259,7 @@ export function generateDeck(god: GodId): Card[] {
   const godSpecific = god === 'PYROS' ? PYROS_CARDS : ZEPHIRA_CARDS;
   const rawDeck: Card[] = [];
 
-  // Generate 15 cards deck (doubles of most cards)
+  // Generate 15-18 cards deck
   godSpecific.forEach(card => {
     rawDeck.push({ ...card, id: `${card.id}_1` });
     rawDeck.push({ ...card, id: `${card.id}_2` });
@@ -202,7 +269,6 @@ export function generateDeck(god: GodId): Card[] {
     rawDeck.push({ ...card, id: `${card.id}_1` });
   });
 
-  // Take first 15 cards and shuffle
   const deck = rawDeck.slice(0, 15);
   return shuffle(deck);
 }

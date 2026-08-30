@@ -1,4 +1,4 @@
-import { GameState, GodId, Dofus, Card, CreatureOnBoard, GameLog } from '../types/game';
+import { GameState, GodId, Dofus, Card, CreatureOnBoard, GameLog, Prism } from '../types/game';
 import { generateDeck } from '../data/cards';
 
 export function createInitialGameState(playerGod: GodId): GameState {
@@ -6,7 +6,6 @@ export function createInitialGameState(playerGod: GodId): GameState {
 
   // Generate Dofuses (3 Real with 5 HP, 2 Fake with 5 HP)
   const createDofuses = (owner: 'PLAYER' | 'AI'): Dofus[] => {
-    // Randomize indices for 3 real dofuses among 0..4
     const indices = [0, 1, 2, 3, 4];
     for (let i = indices.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
@@ -22,6 +21,21 @@ export function createInitialGameState(playerGod: GodId): GameState {
       hp: 5,
       maxHp: 5,
       isRevealed: false,
+    }));
+  };
+
+  // Generate Initial Prisms on Column x=2 (2 PA Prisms, 3 Draw Prisms randomly distributed)
+  const createInitialPrisms = (): Prism[] => {
+    const types: ('PA' | 'DRAW')[] = ['PA', 'PA', 'DRAW', 'DRAW', 'DRAW'];
+    for (let i = types.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [types[i], types[j]] = [types[j], types[i]];
+    }
+    return [0, 1, 2, 3, 4].map(laneIndex => ({
+      id: `prism_lane_${laneIndex}`,
+      laneIndex,
+      position: 2,
+      type: types[laneIndex],
     }));
   };
 
@@ -60,6 +74,7 @@ export function createInitialGameState(playerGod: GodId): GameState {
       player: createDofuses('PLAYER'),
       ai: createDofuses('AI'),
     },
+    prisms: createInitialPrisms(),
     board: [],
     selectedCardId: null,
     selectedTargetType: null,
@@ -96,11 +111,9 @@ export function playCreatureCard(
   if (playerState.pa < card.paCost) return state;
 
   const summonPosition = owner === 'PLAYER' ? 0 : 4;
-  // Check if initial tile is occupied
   const occupied = state.board.some(c => c.laneIndex === laneIndex && c.position === summonPosition);
   if (occupied) return state;
 
-  // Deduct PA and remove card from hand
   const updatedPlayer = {
     ...playerState,
     pa: playerState.pa - card.paCost,
@@ -129,7 +142,17 @@ export function playCreatureCard(
     { id: Date.now().toString(), text: `${owner === 'PLAYER' ? 'Vous invoquez' : 'L\'IA invoque'} ${card.name} sur la ligne ${laneIndex + 1}.`, type: 'INFO' }
   ];
 
-  // Handle CHARGE effect (advances 1 position immediately if free)
+  let newState: GameState = {
+    ...state,
+    [owner === 'PLAYER' ? 'player' : 'ai']: updatedPlayer,
+    board: newBoard,
+    logs,
+  };
+
+  if (card.creatureEffect?.type === 'ON_SUMMON_DRAW' && card.creatureEffect.value) {
+    newState = drawCard(newState, owner, card.creatureEffect.value);
+  }
+
   if (card.creatureEffect?.type === 'CHARGE') {
     const nextPos = owner === 'PLAYER' ? summonPosition + 1 : summonPosition - 1;
     if (!newBoard.some(c => c.laneIndex === laneIndex && c.position === nextPos)) {
@@ -137,11 +160,9 @@ export function playCreatureCard(
     }
   }
 
-  // Handle ON_SUMMON_DAMAGE
   if (card.creatureEffect?.type === 'ON_SUMMON_DAMAGE' && card.creatureEffect.value) {
     const val = card.creatureEffect.value;
     const enemyOwner = owner === 'PLAYER' ? 'AI' : 'PLAYER';
-    // Damage enemy creature on same lane if exists
     const enemy = newBoard.find(c => c.owner === enemyOwner && c.laneIndex === laneIndex);
     if (enemy) {
       enemy.hp -= val;
@@ -151,13 +172,6 @@ export function playCreatureCard(
       }
     }
   }
-
-  let newState: GameState = {
-    ...state,
-    [owner === 'PLAYER' ? 'player' : 'ai']: updatedPlayer,
-    board: newBoard,
-    logs,
-  };
 
   return newState;
 }
@@ -199,7 +213,6 @@ export function playSpellCard(
           if (target.hp <= 0) newBoard = newBoard.filter(c => c.id !== target.id);
         }
       } else if (targetDofusId) {
-        // Damage Dofus
         newStateDofusDamage(newDofuses, targetDofusId, effect.value, logs);
       }
       break;
@@ -273,7 +286,7 @@ export function playSpellCard(
   return checkVictoryConditions(finalState);
 }
 
-export function useGodPower(state: GameState, owner: 'PLAYER' | 'AI', targetLaneIndex?: number): GameState {
+export function useGodPower(state: GameState, owner: 'PLAYER' | 'AI'): GameState {
   const playerState = owner === 'PLAYER' ? state.player : state.ai;
   if (playerState.pa < playerState.godPowerCost || playerState.godPowerUsedThisTurn) return state;
 
@@ -291,11 +304,9 @@ export function useGodPower(state: GameState, owner: 'PLAYER' | 'AI', targetLane
   let newBoard = [...state.board];
 
   if (playerState.god === 'PYROS') {
-    // PYROS: Inflige 2 dégâts à la première créature ennemie rencontrée
     const enemyOwner = owner === 'PLAYER' ? 'AI' : 'PLAYER';
     const targets = newBoard.filter(c => c.owner === enemyOwner);
     if (targets.length > 0) {
-      // Pick first target
       const target = targets[0];
       target.hp -= 2;
       logs.push({ id: (Date.now() + 1).toString(), text: `Pouvoir Pyros inflige 2 dégâts à ${target.name}.`, type: 'GOD_POWER' });
@@ -304,7 +315,6 @@ export function useGodPower(state: GameState, owner: 'PLAYER' | 'AI', targetLane
       logs.push({ id: (Date.now() + 1).toString(), text: `Aucune cible pour le Pouvoir Pyros.`, type: 'GOD_POWER' });
     }
   } else {
-    // ZEPHIRA: Piocher 1 carte et octroyer +1 PM à une créature alliée
     const allies = newBoard.filter(c => c.owner === owner);
     if (allies.length > 0) {
       allies[0].pm += 1;
@@ -333,15 +343,16 @@ export function endTurnAndResolveMovement(state: GameState): GameState {
     player: state.dofuses.player.map(d => ({ ...d })),
     ai: state.dofuses.ai.map(d => ({ ...d })),
   };
+  let prisms = [...state.prisms];
+
+  let playerState = { ...state.player };
+  let aiState = { ...state.ai };
+
+  let tempDraws = { PLAYER: 0, AI: 0 };
 
   logs.push({ id: Date.now().toString(), text: `--- Fin du tour : Déplacement & Combats ---`, type: 'INFO' });
 
-  // Move and combat for active player's creatures first, then opponent's
-  const currentOwner = state.activePlayer;
-
-  // Process movement per lane (0 to 4)
   for (let lane = 0; lane < 5; lane++) {
-    // Get creatures in this lane, sorted by proximity to target
     const laneCreatures = board.filter(c => c.laneIndex === lane);
 
     for (const creature of laneCreatures) {
@@ -353,9 +364,7 @@ export function endTurnAndResolveMovement(state: GameState): GameState {
       while (pmLeft > 0 && creature.hp > 0) {
         const nextPos = creature.position + direction;
 
-        // Check if hitting Dofus line
         if ((creature.owner === 'PLAYER' && nextPos > 4) || (creature.owner === 'AI' && nextPos < 0)) {
-          // Attacking opponent Dofus
           const targetDofusOwner = creature.owner === 'PLAYER' ? 'ai' : 'player';
           const targetDofus = dofuses[targetDofusOwner].find(d => d.laneIndex === lane);
 
@@ -367,13 +376,11 @@ export function endTurnAndResolveMovement(state: GameState): GameState {
               text: `${creature.name} frappe le Dofus de la ligne ${lane + 1} pour ${creature.atk} dégâts ! (${targetDofus.isReal ? 'VRAI DOFUS !' : 'Faux Dofus !'})`,
               type: 'COMBAT'
             });
-            // Creature dies upon hitting Dofus
             creature.hp = 0;
           }
           break;
         }
 
-        // Check range combat before moving
         const enemyOwner = creature.owner === 'PLAYER' ? 'AI' : 'PLAYER';
         const inRangeEnemies = board.filter(other =>
           other.owner === enemyOwner &&
@@ -383,7 +390,6 @@ export function endTurnAndResolveMovement(state: GameState): GameState {
         );
 
         if (inRangeEnemies.length > 0) {
-          // Engage in combat with the closest enemy
           inRangeEnemies.sort((a, b) => Math.abs(a.position - creature.position) - Math.abs(b.position - creature.position));
           const enemy = inRangeEnemies[0];
 
@@ -393,41 +399,71 @@ export function endTurnAndResolveMovement(state: GameState): GameState {
             type: 'COMBAT'
           });
 
-          // Simultaneous damage exchange
           enemy.hp -= creature.atk;
           creature.hp -= enemy.atk;
-          pmLeft = 0; // Stop moving this turn after combat
+          pmLeft = 0;
           break;
         }
 
-        // Check if next tile is occupied by ANY creature
         const tileOccupied = board.some(other => other.laneIndex === lane && other.position === nextPos && other.hp > 0 && other.id !== creature.id);
-        if (tileOccupied) {
-          // Blocked
-          break;
-        }
+        if (tileOccupied) break;
 
-        // Move 1 tile forward
         creature.position = nextPos;
         pmLeft--;
+
+        const prismIdx = prisms.findIndex(p => p.laneIndex === lane && p.position === creature.position);
+        if (prismIdx !== -1) {
+          const prism = prisms[prismIdx];
+          prisms.splice(prismIdx, 1);
+
+          const ownerIsPlayer = creature.owner === 'PLAYER';
+          if (prism.type === 'PA') {
+            if (ownerIsPlayer) playerState.pa = Math.min(10, playerState.pa + 1);
+            else aiState.pa = Math.min(10, aiState.pa + 1);
+
+            logs.push({
+              id: Date.now().toString(),
+              text: `${creature.name} ramasse un Prisme de PA (+1 PA) !`,
+              type: 'PRISM'
+            });
+          } else if (prism.type === 'DRAW') {
+            tempDraws[creature.owner] += 1;
+            logs.push({
+              id: Date.now().toString(),
+              text: `${creature.name} ramasse un Prisme de Pioche (+1 Carte) !`,
+              type: 'PRISM'
+            });
+          }
+        }
       }
     }
   }
 
-  // Remove dead creatures from board
+  if (prisms.length < 3) {
+    const emptyPrismLanes = [0, 1, 2, 3, 4].filter(lane => !prisms.some(p => p.laneIndex === lane));
+    if (emptyPrismLanes.length > 0) {
+      const respawnLane = emptyPrismLanes[Math.floor(Math.random() * emptyPrismLanes.length)];
+      const newType: 'PA' | 'DRAW' = Math.random() > 0.5 ? 'PA' : 'DRAW';
+      prisms.push({
+        id: `prism_${Date.now()}`,
+        laneIndex: respawnLane,
+        position: 2,
+        type: newType,
+      });
+    }
+  }
+
   board = board.filter(c => c.hp > 0);
 
-  // Switch turn
   const nextPlayer = state.activePlayer === 'PLAYER' ? 'AI' : 'PLAYER';
   const newTurn = nextPlayer === 'PLAYER' ? state.turn + 1 : state.turn;
 
-  // Recharge PA
-  const updatePlayerState = (pState: typeof state.player) => {
-    const newMax = Math.min(10, pState.maxPa + (nextPlayer === (pState.god === state.player.god ? 'PLAYER' : 'AI') ? 1 : 0));
+  const updatePA = (pState: typeof state.player, isNext: boolean) => {
+    const newMax = Math.min(10, pState.maxPa + (isNext ? 1 : 0));
     return {
       ...pState,
       maxPa: newMax,
-      pa: newMax,
+      pa: isNext ? newMax : pState.pa,
       godPowerUsedThisTurn: false,
     };
   };
@@ -437,14 +473,17 @@ export function endTurnAndResolveMovement(state: GameState): GameState {
     turn: newTurn,
     phase: nextPlayer === 'PLAYER' ? 'PLAYER_TURN' : 'AI_TURN',
     activePlayer: nextPlayer,
-    player: updatePlayerState(state.player),
-    ai: updatePlayerState(state.ai),
+    player: updatePA(playerState, nextPlayer === 'PLAYER'),
+    ai: updatePA(aiState, nextPlayer === 'AI'),
     board,
     dofuses,
+    prisms,
     logs,
   };
 
-  // Draw card for the starting player of new turn
+  if (tempDraws.PLAYER > 0) nextState = drawCard(nextState, 'PLAYER', tempDraws.PLAYER);
+  if (tempDraws.AI > 0) nextState = drawCard(nextState, 'AI', tempDraws.AI);
+
   nextState = drawCard(nextState, nextPlayer, 1);
 
   return checkVictoryConditions(nextState);

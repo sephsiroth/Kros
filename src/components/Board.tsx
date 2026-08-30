@@ -1,11 +1,12 @@
 import React from 'react';
-import { CreatureOnBoard, Dofus } from '../types/game';
-import { Heart, Zap, Footprints, Target, Shield, Flame, EyeOff } from 'lucide-react';
+import { CreatureOnBoard, Dofus, Prism } from '../types/game';
+import { Heart, Zap, Footprints, Target, EyeOff, Sparkles, Layers } from 'lucide-react';
 
 interface BoardProps {
   board: CreatureOnBoard[];
   playerDofuses: Dofus[];
   aiDofuses: Dofus[];
+  prisms: Prism[];
   selectedCardType: 'CREATURE' | 'SPELL' | null;
   onTileClick: (laneIndex: number, position: number) => void;
   onCreatureClick: (creature: CreatureOnBoard) => void;
@@ -16,6 +17,7 @@ export const Board: React.FC<BoardProps> = ({
   board,
   playerDofuses,
   aiDofuses,
+  prisms,
   selectedCardType,
   onTileClick,
   onCreatureClick,
@@ -65,6 +67,10 @@ export const Board: React.FC<BoardProps> = ({
                 const creature = board.find(
                   c => c.laneIndex === laneIndex && c.position === position
                 );
+                const prism = prisms.find(
+                  p => p.laneIndex === laneIndex && p.position === position
+                );
+
                 const isPlayerSummonTile = position === 0;
                 const isAiSummonTile = position === 4;
 
@@ -91,10 +97,28 @@ export const Board: React.FC<BoardProps> = ({
                         : 'border-slate-800 bg-slate-950/60 hover:border-slate-700'
                     }`}
                   >
-                    {/* Position indicator line helper */}
+                    {/* Tile Coordinate Helper */}
                     <span className="absolute top-1 left-1.5 text-[9px] text-slate-600 font-semibold">
                       {laneIndex + 1}-{position + 1}
                     </span>
+
+                    {/* PRISM DISPLAY ON TILE */}
+                    {prism && !creature && (
+                      <div className="flex flex-col items-center justify-center animate-bounce">
+                        {prism.type === 'PA' ? (
+                          <div className="p-1.5 rounded-full bg-blue-500/20 border border-blue-400 text-blue-400 shadow-md flex items-center justify-center">
+                            <Zap className="w-4 h-4 fill-blue-400" />
+                          </div>
+                        ) : (
+                          <div className="p-1.5 rounded-full bg-amber-500/20 border border-amber-400 text-amber-400 shadow-md flex items-center justify-center">
+                            <Layers className="w-4 h-4" />
+                          </div>
+                        )}
+                        <span className="text-[9px] font-bold text-slate-300 mt-0.5">
+                          {prism.type === 'PA' ? '+1 PA' : '+1 Carte'}
+                        </span>
+                      </div>
+                    )}
 
                     {/* CREATURE ON TILE */}
                     {creature && (

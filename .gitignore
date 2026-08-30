@@ -4,3 +4,5 @@ dist-electron
 *.local
 .DS_Store
 *.apk
+dev_server.log
+tsconfig.tsbuildinfo
