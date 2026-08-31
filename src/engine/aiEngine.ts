@@ -18,17 +18,15 @@ export function executeAiTurn(state: GameState): GameState {
     const playableCreatures = aiHand.filter(c => c.type === 'CREATURE' && c.paCost <= aiPa);
 
     if (playableCreatures.length > 0) {
-      // Pick best creature (highest PA cost possible)
       playableCreatures.sort((a, b) => b.paCost - a.paCost);
       const chosenCreature = playableCreatures[0];
 
-      // Find available lanes where tile x=4 is empty
+      // On a 7-tile board, AI summons on pos=6
       const availableLanes = [0, 1, 2, 3, 4].filter(lane =>
-        !board.some(c => c.laneIndex === lane && c.position === 4)
+        !board.some(c => c.laneIndex === lane && c.position === 6)
       );
 
       if (availableLanes.length > 0) {
-        // Prioritize lanes with enemy player creatures approaching
         const playerThreats = board.filter(c => c.owner === 'PLAYER');
         let targetLane = availableLanes[0];
 
@@ -53,7 +51,6 @@ export function executeAiTurn(state: GameState): GameState {
       const spell = playableSpells[0];
 
       if (spell.spellEffect?.type === 'DAMAGE_TARGET' || spell.spellEffect?.type === 'PUSH') {
-        // Target strongest player creature
         const playerCreatures = currentState.board.filter(c => c.owner === 'PLAYER');
         if (playerCreatures.length > 0) {
           playerCreatures.sort((a, b) => b.atk - a.atk);
@@ -61,7 +58,6 @@ export function executeAiTurn(state: GameState): GameState {
           continue;
         }
       } else if (spell.spellEffect?.type === 'DAMAGE_ALL_LINE') {
-        // Find lane with most player creatures
         let bestLane = 0;
         let maxCount = 0;
         for (let l = 0; l < 5; l++) {
@@ -93,7 +89,6 @@ export function executeAiTurn(state: GameState): GameState {
       continue;
     }
 
-    // No more meaningful actions can be taken
     break;
   }
 

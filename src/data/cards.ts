@@ -53,7 +53,7 @@ export const PYROS_CARDS: Card[] = [
     hp: 7,
     pm: 1,
     range: 1,
-    description: 'Barde de lava colossale résistant aux chocs.',
+    description: 'Barde de lave colossale résistant aux chocs.',
     illustration: '🗿'
   },
   {
@@ -96,6 +96,19 @@ export const PYROS_CARDS: Card[] = [
     description: 'Guerrier sanguinaire qui fonce au combat.',
     creatureEffect: { type: 'CHARGE' },
     illustration: '🩸'
+  },
+  {
+    id: 'pyr_c8',
+    name: 'Minotoror',
+    god: 'PYROS',
+    type: 'CREATURE',
+    paCost: 7,
+    atk: 8,
+    hp: 8,
+    pm: 1,
+    range: 1,
+    description: 'Bête légendaire destructrice de Dofus.',
+    illustration: '🐂'
   },
   {
     id: 'pyr_s1',
@@ -225,6 +238,19 @@ export const ZEPHIRA_CARDS: Card[] = [
     illustration: '🐼'
   },
   {
+    id: 'zep_c8',
+    name: 'Corbac Céleste',
+    god: 'ZEPHIRA',
+    type: 'CREATURE',
+    paCost: 4,
+    atk: 3,
+    hp: 3,
+    pm: 3,
+    range: 2,
+    description: 'Oiseau agile à attaque portée et haute mobilité.',
+    illustration: '🦅'
+  },
+  {
     id: 'zep_s1',
     name: 'Flèche Ciblée',
     god: 'ZEPHIRA',
@@ -311,6 +337,32 @@ export const NEUTRAL_CARDS: Card[] = [
     illustration: '👑'
   },
   {
+    id: 'neu_c5',
+    name: 'Gelée Royale',
+    god: 'NEUTRAL',
+    type: 'CREATURE',
+    paCost: 3,
+    atk: 2,
+    hp: 6,
+    pm: 1,
+    range: 1,
+    description: 'Résistante avec beaucoup de PV.',
+    illustration: '🍮'
+  },
+  {
+    id: 'neu_c6',
+    name: 'Vampyro',
+    god: 'NEUTRAL',
+    type: 'CREATURE',
+    paCost: 6,
+    atk: 6,
+    hp: 6,
+    pm: 2,
+    range: 1,
+    description: 'Seigneur ténébreux volant.',
+    illustration: '🧛'
+  },
+  {
     id: 'neu_s1',
     name: 'Potion de Soin',
     god: 'NEUTRAL',
@@ -335,7 +387,7 @@ export function generateDeck(god: GodId): Card[] {
     rawDeck.push({ ...card, id: `${card.id}_1` });
   });
 
-  const deck = rawDeck.slice(0, 18);
+  const deck = rawDeck.slice(0, 20);
   return shuffle(deck);
 }
 

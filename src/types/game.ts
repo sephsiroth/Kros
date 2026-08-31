@@ -41,7 +41,7 @@ export interface Dofus {
 export interface Prism {
   id: string;
   laneIndex: number; // 0 to 4
-  position: number;  // Always 2 (center column)
+  position: number;  // Always 3 (center column on 7-tile board: 0..6)
   type: 'PA' | 'DRAW';
 }
 
@@ -56,9 +56,11 @@ export interface CreatureOnBoard {
   pm: number;
   range: number;
   laneIndex: number; // 0 to 4
-  position: number;  // 0 to 4 (0 = Player side, 4 = AI side)
+  position: number;  // 0 to 6 (0 = Player summon tile, 6 = AI summon tile)
   canAct: boolean;
   illustration: string;
+  isAttacking?: boolean;
+  isDamaged?: boolean;
 }
 
 export interface PlayerState {
@@ -88,9 +90,9 @@ export interface GameState {
   ai: PlayerState;
   dofuses: {
     player: Dofus[]; // 5 Dofuses at col 0
-    ai: Dofus[];     // 5 Dofuses at col 4
+    ai: Dofus[];     // 5 Dofuses at col 6
   };
-  prisms: Prism[];   // Prisms on center column x=2
+  prisms: Prism[];   // Prisms on center column x=3
   board: CreatureOnBoard[];
   selectedCardId: string | null;
   selectedTargetType: 'TILE' | 'CREATURE' | 'ENEMY_LINE' | 'NONE' | null;

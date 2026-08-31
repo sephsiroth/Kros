@@ -20,3 +20,11 @@
 1:40:58 PM [vite] (client) hmr update /src/index.css, /src/App.tsx
 1:42:19 PM [vite] (client) hmr update /src/components/GameView.tsx, /src/index.css
 1:42:40 PM [vite] (client) page reload tsconfig.tsbuildinfo
+7:56:32 AM [vite] (client) page reload src/types/game.ts
+7:56:57 AM [vite] (client) hmr update /src/App.tsx, /src/index.css
+7:57:03 AM [vite] (client) hmr update /src/App.tsx, /src/index.css
+7:57:28 AM [vite] (client) hmr update /src/index.css, /src/App.tsx
+7:57:41 AM [vite] (client) hmr update /src/index.css
+7:57:54 AM [vite] (client) hmr update /src/components/Board.tsx, /src/index.css
+7:58:10 AM [vite] (client) page reload src/engine/gameEngine.test.ts
+7:58:20 AM [vite] (client) page reload tsconfig.tsbuildinfo

@@ -24,7 +24,7 @@ export function createInitialGameState(playerGod: GodId): GameState {
     }));
   };
 
-  // Generate Initial Prisms on Column x=2 (2 PA Prisms, 3 Draw Prisms randomly distributed)
+  // Generate Initial Prisms on Column x=3 (center column on 7-tile board)
   const createInitialPrisms = (): Prism[] => {
     const types: ('PA' | 'DRAW')[] = ['PA', 'PA', 'DRAW', 'DRAW', 'DRAW'];
     for (let i = types.length - 1; i > 0; i--) {
@@ -34,7 +34,7 @@ export function createInitialGameState(playerGod: GodId): GameState {
     return [0, 1, 2, 3, 4].map(laneIndex => ({
       id: `prism_lane_${laneIndex}`,
       laneIndex,
-      position: 2,
+      position: 3,
       type: types[laneIndex],
     }));
   };
@@ -80,7 +80,7 @@ export function createInitialGameState(playerGod: GodId): GameState {
     selectedTargetType: null,
     winner: null,
     logs: [
-      { id: '1', text: `Début du combat ! Vous jouez ${playerGod} contre l'IA (${aiGod}).`, type: 'INFO' }
+      { id: '1', text: `Début du combat sur plateau 5x7 ! Vous jouez ${playerGod} contre l'IA (${aiGod}).`, type: 'INFO' }
     ],
   };
 }
@@ -110,7 +110,7 @@ export function playCreatureCard(
   const playerState = owner === 'PLAYER' ? state.player : state.ai;
   if (playerState.pa < card.paCost) return state;
 
-  const summonPosition = owner === 'PLAYER' ? 0 : 4;
+  const summonPosition = owner === 'PLAYER' ? 0 : 6;
   const occupied = state.board.some(c => c.laneIndex === laneIndex && c.position === summonPosition);
   if (occupied) return state;
 
@@ -209,6 +209,7 @@ export function playSpellCard(
         const target = newBoard.find(c => c.id === targetCreatureId);
         if (target) {
           target.hp -= effect.value;
+          target.isDamaged = true;
           logs.push({ id: Date.now().toString(), text: `${card.name} inflige ${effect.value} dégâts à ${target.name}.`, type: 'SPELL' });
           if (target.hp <= 0) newBoard = newBoard.filter(c => c.id !== target.id);
         }
@@ -222,6 +223,7 @@ export function playSpellCard(
         newBoard.forEach(c => {
           if (c.laneIndex === targetLaneIndex) {
             c.hp -= effect.value;
+            c.isDamaged = true;
           }
         });
         logs.push({ id: Date.now().toString(), text: `${card.name} inflige ${effect.value} dégâts à toutes les créatures de la ligne ${targetLaneIndex + 1}.`, type: 'SPELL' });
@@ -254,7 +256,7 @@ export function playSpellCard(
         const target = newBoard.find(c => c.id === targetCreatureId);
         if (target) {
           const pushDirection = target.owner === 'PLAYER' ? -1 : 1;
-          const newPos = Math.max(0, Math.min(4, target.position + pushDirection));
+          const newPos = Math.max(0, Math.min(6, target.position + pushDirection));
           if (!newBoard.some(c => c.laneIndex === target.laneIndex && c.position === newPos && c.id !== target.id)) {
             target.position = newPos;
             logs.push({ id: Date.now().toString(), text: `${target.name} est repoussé d'une case !`, type: 'SPELL' });
@@ -309,6 +311,7 @@ export function useGodPower(state: GameState, owner: 'PLAYER' | 'AI'): GameState
     if (targets.length > 0) {
       const target = targets[0];
       target.hp -= 2;
+      target.isDamaged = true;
       logs.push({ id: (Date.now() + 1).toString(), text: `Pouvoir Pyros inflige 2 dégâts à ${target.name}.`, type: 'GOD_POWER' });
       newBoard = newBoard.filter(c => c.hp > 0);
     } else {
@@ -338,7 +341,7 @@ export function useGodPower(state: GameState, owner: 'PLAYER' | 'AI'): GameState
 
 export function endTurnAndResolveMovement(state: GameState): GameState {
   let logs = [...state.logs];
-  let board = [...state.board.map(c => ({ ...c }))];
+  let board = [...state.board.map(c => ({ ...c, isAttacking: false, isDamaged: false }))];
   let dofuses = {
     player: state.dofuses.player.map(d => ({ ...d })),
     ai: state.dofuses.ai.map(d => ({ ...d })),
@@ -364,13 +367,14 @@ export function endTurnAndResolveMovement(state: GameState): GameState {
       while (pmLeft > 0 && creature.hp > 0) {
         const nextPos = creature.position + direction;
 
-        if ((creature.owner === 'PLAYER' && nextPos > 4) || (creature.owner === 'AI' && nextPos < 0)) {
+        if ((creature.owner === 'PLAYER' && nextPos > 6) || (creature.owner === 'AI' && nextPos < 0)) {
           const targetDofusOwner = creature.owner === 'PLAYER' ? 'ai' : 'player';
           const targetDofus = dofuses[targetDofusOwner].find(d => d.laneIndex === lane);
 
           if (targetDofus && targetDofus.hp > 0) {
             targetDofus.hp -= creature.atk;
             targetDofus.isRevealed = true;
+            creature.isAttacking = true;
             logs.push({
               id: Date.now().toString(),
               text: `${creature.name} frappe le Dofus de la ligne ${lane + 1} pour ${creature.atk} dégâts ! (${targetDofus.isReal ? 'VRAI DOFUS !' : 'Faux Dofus !'})`,
@@ -393,6 +397,11 @@ export function endTurnAndResolveMovement(state: GameState): GameState {
           inRangeEnemies.sort((a, b) => Math.abs(a.position - creature.position) - Math.abs(b.position - creature.position));
           const enemy = inRangeEnemies[0];
 
+          creature.isAttacking = true;
+          enemy.isAttacking = true;
+          creature.isDamaged = true;
+          enemy.isDamaged = true;
+
           logs.push({
             id: Date.now().toString(),
             text: `Combat : ${creature.name} (${creature.atk} ATK) combat ${enemy.name} (${enemy.atk} ATK) !`,
@@ -411,6 +420,7 @@ export function endTurnAndResolveMovement(state: GameState): GameState {
         creature.position = nextPos;
         pmLeft--;
 
+        // Check PRISM COLLECTION on position x=3
         const prismIdx = prisms.findIndex(p => p.laneIndex === lane && p.position === creature.position);
         if (prismIdx !== -1) {
           const prism = prisms[prismIdx];
@@ -447,7 +457,7 @@ export function endTurnAndResolveMovement(state: GameState): GameState {
       prisms.push({
         id: `prism_${Date.now()}`,
         laneIndex: respawnLane,
-        position: 2,
+        position: 3,
         type: newType,
       });
     }
