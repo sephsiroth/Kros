@@ -4,6 +4,7 @@ import { createInitialGameState, playCreatureCard, playSpellCard, useGodPower, e
 import { executeAiTurn } from './engine/aiEngine';
 import { GodSelect } from './components/GodSelect';
 import { GameView } from './components/GameView';
+import { soundEffects } from './utils/audio';
 
 export default function App() {
   const [selectedGod, setSelectedGod] = useState<GodId | null>(null);
@@ -11,12 +12,14 @@ export default function App() {
   const [selectedCard, setSelectedCard] = useState<Card | null>(null);
 
   const handleSelectGod = (god: GodId) => {
+    soundEffects.playClick();
     setSelectedGod(god);
     const initialState = createInitialGameState(god);
     setGameState(initialState);
   };
 
   const handleSelectCard = (card: Card) => {
+    soundEffects.playClick();
     if (selectedCard?.id === card.id) {
       setSelectedCard(null);
     } else {
@@ -29,12 +32,14 @@ export default function App() {
 
     if (selectedCard.type === 'CREATURE') {
       if (position === 0) {
+        soundEffects.playSummon();
         const newState = playCreatureCard(gameState, 'PLAYER', selectedCard, laneIndex);
         setGameState(newState);
         setSelectedCard(null);
       }
     } else if (selectedCard.type === 'SPELL') {
       if (selectedCard.spellEffect?.type === 'DAMAGE_ALL_LINE') {
+        soundEffects.playSpell();
         const newState = playSpellCard(gameState, 'PLAYER', selectedCard, laneIndex);
         setGameState(newState);
         setSelectedCard(null);
@@ -46,6 +51,7 @@ export default function App() {
     if (!gameState || !selectedCard || gameState.phase !== 'PLAYER_TURN') return;
 
     if (selectedCard.type === 'SPELL') {
+      soundEffects.playSpell();
       const newState = playSpellCard(gameState, 'PLAYER', selectedCard, creature.laneIndex, creature.id);
       setGameState(newState);
       setSelectedCard(null);
@@ -56,6 +62,7 @@ export default function App() {
     if (!gameState || !selectedCard || gameState.phase !== 'PLAYER_TURN') return;
 
     if (selectedCard.type === 'SPELL' && dofus.owner === 'AI') {
+      soundEffects.playSpell();
       const newState = playSpellCard(gameState, 'PLAYER', selectedCard, dofus.laneIndex, undefined, dofus.id);
       setGameState(newState);
       setSelectedCard(null);
@@ -64,12 +71,14 @@ export default function App() {
 
   const handleUseGodPower = () => {
     if (!gameState || gameState.phase !== 'PLAYER_TURN') return;
+    soundEffects.playSpell();
     const newState = useGodPower(gameState, 'PLAYER');
     setGameState(newState);
   };
 
   const handleEndTurn = () => {
     if (!gameState || gameState.phase !== 'PLAYER_TURN') return;
+    soundEffects.playAttack();
     setSelectedCard(null);
     const newState = endTurnAndResolveMovement(gameState);
     setGameState(newState);
@@ -90,6 +99,7 @@ export default function App() {
 
   const handleRestart = () => {
     if (selectedGod) {
+      soundEffects.playClick();
       setGameState(createInitialGameState(selectedGod));
       setSelectedCard(null);
     }
