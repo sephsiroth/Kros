@@ -1,6 +1,6 @@
 import React from 'react';
 import { CreatureOnBoard, Dofus, Prism } from '../types/game';
-import { Heart, Zap, Footprints, Target, EyeOff, Layers, Swords } from 'lucide-react';
+import { Heart, Zap, Footprints, Target, EyeOff, Layers, Swords, Shield } from 'lucide-react';
 import { soundEffects } from '../utils/audio';
 
 interface BoardProps {
@@ -93,8 +93,8 @@ export const Board: React.FC<BoardProps> = ({
                         ? 'border-emerald-400 bg-emerald-500/25 animate-pulse kros-glow-teal'
                         : creature
                         ? creature.owner === 'PLAYER'
-                          ? 'border-indigo-500/80 bg-gradient-to-b from-indigo-900/90 to-slate-900/90 kros-glow-blue'
-                          : 'border-red-500/80 bg-gradient-to-b from-red-950/90 to-slate-900/90 kros-glow-red'
+                          ? 'border-indigo-500/80 kros-mob-pedestal-player'
+                          : 'border-red-500/80 kros-mob-pedestal-ai'
                         : isPlayerSummonTile
                         ? 'border-indigo-500/40 bg-indigo-950/30 hover:border-indigo-400/80 hover:bg-indigo-900/40'
                         : isAiSummonTile
@@ -125,40 +125,58 @@ export const Board: React.FC<BoardProps> = ({
                       </div>
                     )}
 
-                    {/* CREATURE ON TILE WITH COMBAT ANIMATIONS */}
+                    {/* CREATURE MOB FIGURINE ON PEDESTAL */}
                     {creature && (
-                      <div className={`flex flex-col items-center justify-between w-full h-full p-0.5 transition-all duration-300 ${
+                      <div className={`relative flex flex-col items-center justify-between w-full h-full p-0.5 transition-all duration-300 ${
                         creature.isDamaged ? 'animate-hit' : creature.isAttacking ? 'animate-attack' : 'animate-summon'
                       }`}>
+                        {/* Attacking Ping Swords Indicator */}
                         {creature.isAttacking && (
-                          <Swords className="w-3 h-3 text-red-400 absolute top-0.5 right-0.5 animate-ping" />
+                          <Swords className="w-3.5 h-3.5 text-red-400 absolute top-0.5 right-0.5 animate-ping z-20" />
                         )}
 
-                        <div className="text-base sm:text-xl md:text-2xl filter drop-shadow-md my-auto">
-                          {creature.illustration}
+                        {/* Owner Banner Flag Badge */}
+                        <div className={`absolute top-0.5 right-0.5 text-[7px] font-black px-1 rounded-full border shadow-sm ${
+                          creature.owner === 'PLAYER'
+                            ? 'bg-indigo-600 text-indigo-100 border-indigo-400'
+                            : 'bg-red-600 text-red-100 border-red-400'
+                        }`}>
+                          {creature.owner === 'PLAYER' ? 'P1' : 'IA'}
                         </div>
 
-                        <div className="text-[8px] sm:text-[9px] font-bold text-slate-100 truncate w-full text-center px-0.5">
+                        {/* Creature Figurine Mascot */}
+                        <div className="relative my-auto flex items-center justify-center filter drop-shadow-xl">
+                          <div className="text-xl sm:text-2xl md:text-3xl z-10 hover:scale-110 transition-transform">
+                            {creature.illustration}
+                          </div>
+                          {/* Glowing Ring Base */}
+                          <div className={`absolute -bottom-1 w-7 h-2 rounded-full filter blur-[2px] opacity-80 ${
+                            creature.owner === 'PLAYER' ? 'bg-indigo-400' : 'bg-red-500'
+                          }`} />
+                        </div>
+
+                        {/* Name Tag */}
+                        <div className="text-[8px] sm:text-[9px] font-black text-slate-100 truncate w-full text-center px-0.5 bg-slate-950/70 rounded border border-slate-800/60 z-10">
                           {creature.name}
                         </div>
 
-                        {/* Creature Stats Pill */}
-                        <div className="flex items-center justify-around w-full bg-slate-950/90 rounded border border-slate-800/80 px-0.5 py-0.5 text-[7px] sm:text-[8px] md:text-[9px] font-black">
-                          <span className="text-amber-400 flex items-center gap-0.5">
+                        {/* Tactile Stats Pill */}
+                        <div className="flex items-center justify-around w-full bg-slate-950/95 rounded border border-slate-700/80 px-0.5 py-0.5 text-[7px] sm:text-[8px] md:text-[9px] font-black z-10 shadow-inner">
+                          <span className="text-amber-400 flex items-center gap-0.5" title="Attaque">
                             <Zap className="w-2 h-2" />
                             {creature.atk}
                           </span>
                           {creature.range > 1 && (
-                            <span className="text-cyan-400 flex items-center gap-0.5">
+                            <span className="text-cyan-400 flex items-center gap-0.5" title="Portée">
                               <Target className="w-2 h-2" />
                               {creature.range}
                             </span>
                           )}
-                          <span className="text-emerald-400 flex items-center gap-0.5">
+                          <span className="text-emerald-400 flex items-center gap-0.5" title="Mouvement">
                             <Footprints className="w-2 h-2" />
                             {creature.pm}
                           </span>
-                          <span className="text-red-400 flex items-center gap-0.5">
+                          <span className="text-red-400 flex items-center gap-0.5" title="Points de Vie">
                             <Heart className="w-2 h-2 fill-red-400" />
                             {creature.hp}
                           </span>

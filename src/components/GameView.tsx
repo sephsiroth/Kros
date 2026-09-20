@@ -50,17 +50,23 @@ export const GameView: React.FC<GameViewProps> = ({
 
   const toggleFullscreen = () => {
     soundEffects.playClick();
-    if (!document.fullscreenElement) {
-      document.documentElement.requestFullscreen().then(() => setIsFullscreen(true)).catch(() => {});
-    } else {
-      if (document.exitFullscreen) {
-        document.exitFullscreen().then(() => setIsFullscreen(false)).catch(() => {});
+    if (!isFullscreen) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
       }
+      setIsFullscreen(true);
+    } else {
+      if (document.exitFullscreen && document.fullscreenElement) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsFullscreen(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-slate-950 text-slate-100 overflow-hidden select-none">
+    <div className={`flex flex-col bg-slate-950 text-slate-100 overflow-hidden select-none ${
+      isFullscreen ? 'fixed inset-0 z-[9999] w-screen h-screen' : 'h-screen w-screen'
+    }`}>
 
       {/* TOP HEADER - AI & QUICK CONTROLS */}
       <header className="flex items-center justify-between px-2 sm:px-3 py-1 bg-slate-900/90 border-b border-amber-600/30 backdrop-blur-md h-[44px] flex-shrink-0">
@@ -106,7 +112,9 @@ export const GameView: React.FC<GameViewProps> = ({
 
           <button
             onClick={toggleFullscreen}
-            className="p-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 transition-colors"
+            className={`p-1.5 rounded-xl border transition-colors ${
+              isFullscreen ? 'bg-amber-600 text-slate-950 border-amber-300' : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700'
+            }`}
             title="Plein écran"
           >
             {isFullscreen ? <Minimize className="w-3.5 h-3.5" /> : <Maximize className="w-3.5 h-3.5" />}
