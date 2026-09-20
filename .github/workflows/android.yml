@@ -5,6 +5,9 @@ on:
     branches: [ main, master, 'feat/*' ]
   workflow_dispatch:
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE20: true
+
 jobs:
   build-android:
     runs-on: ubuntu-24.04
@@ -16,7 +19,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: 'npm'
 
       - name: Install Dependencies
